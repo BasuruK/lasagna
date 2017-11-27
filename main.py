@@ -14,7 +14,8 @@ cpu_config_level_medium = 30
 cpu_status = RAG.GREEN
 
 # HDD Utilization config level
-hdd_config_level = None
+hdd_config_level_min = 1000
+hdd_config_level_medium = 10000
 hdd_status = RAG.GREEN
 
 
@@ -47,10 +48,19 @@ def check_cpu_utilization_level():
 
 
 def check_hdd_utilization_level():
-    return True
+    hdd_util = subprocess.Popen("df | grep '/dev/sda2' | awk -F ' ' '{print $4}'", stdout=subprocess.PIPE, shell=True)
+    # hdd_util = int(str(hdd_util.communicate()[0]).split("\\n"))
+    hdd_util = int(str(hdd_util.communicate()[0]).split("'")[1].split("\\n")[0])
+
+    if hdd_util <= hdd_config_level_min:
+        return RAG.RED
+    elif hdd_config_level_medium < hdd_util <= hdd_config_level_min:
+        return RAG.AMBER
+    elif hdd_util > hdd_config_level_medium:
+        return RAG.GREEN
 
 
 # Main functionality
 while True:
-    print(check_cpu_utilization_level())
+    print(check_hdd_utilization_level())
     break
