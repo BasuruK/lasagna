@@ -32,7 +32,6 @@ def check_ram_utilization_level():
         return RAG.AMBER
     elif ram_mb > mem_config_level_medium:
         return RAG.GREEN
-    return ram_mb
 
 
 def check_cpu_utilization_level():
@@ -60,6 +59,18 @@ def check_hdd_utilization_level():
         return RAG.GREEN
 
 
+def check_file_modification_time():
+    return True
+
+
+def check_mysql_status():
+    return True
+
+
+def check_telnet_status():
+    return True
+
+    
 # Main functionality
 while True:
     print(check_hdd_utilization_level())
