@@ -2,6 +2,7 @@ import os
 import threading
 import subprocess
 from lasagna import RAG
+from lasagna import log_manager
 
 # Ram min config level in MB
 mem_config_level_min = 500
@@ -24,7 +25,7 @@ def check_ram_utilization_level():
     free_mem = free_mem.read()
     # Convert KB to MB
     ram_mb = free_mem.split(":")[1].lstrip()
-    ram_mb = int(ram_mb.split(" ")[0]) / 1024
+    ram_mb = float(ram_mb.split(" ")[0]) / 1024
 
     if ram_mb < mem_config_level_min:
         return RAG.RED
@@ -36,7 +37,7 @@ def check_ram_utilization_level():
 
 def check_cpu_utilization_level():
     cpu_util = subprocess.Popen("mpstat | awk -F ' ' '{print $12}'", stdout=subprocess.PIPE, shell=True)
-    cpu_util = int(str(cpu_util.communicate()[0]).split("\\n")[3])
+    cpu_util = float(str(cpu_util.communicate()[0]).split("\\n")[3])
 
     if cpu_util <= cpu_config_level_min:
         return RAG.RED
@@ -49,7 +50,7 @@ def check_cpu_utilization_level():
 def check_hdd_utilization_level():
     hdd_util = subprocess.Popen("df | grep '/dev/sda2' | awk -F ' ' '{print $4}'", stdout=subprocess.PIPE, shell=True)
     # hdd_util = int(str(hdd_util.communicate()[0]).split("\\n"))
-    hdd_util = int(str(hdd_util.communicate()[0]).split("'")[1].split("\\n")[0])
+    hdd_util = float(str(hdd_util.communicate()[0]).split("'")[1].split("\\n")[0])
 
     if hdd_util <= hdd_config_level_min:
         return RAG.RED
@@ -70,8 +71,44 @@ def check_mysql_status():
 def check_telnet_status():
     return True
 
-    
+
+def get_server_name():
+    svr_name = subprocess.Popen("uname -r", stdout=subprocess.PIPE, shell=True)
+    return str(svr_name.communicate()).split("'")[1].rsplit("\\n")[0]
+
+
+def read_file():
+    try:
+        file = open("check_log.txt", "r+")
+        return file
+    except FileNotFoundError:
+        print("Log File not found")
+        print("File will be created")
+        open("check_log.txt", 'w').close()
+        read_file()
+
+
+def close_file(file):
+    try:
+        file.close()
+    except FileNotFoundError:
+        print("Check_log not found")
+
+
 # Main functionality
 while True:
-    print(check_hdd_utilization_level())
+    server_name = get_server_name()
+    ram_utilization = check_ram_utilization_level()
+    cpu_utilization = check_cpu_utilization_level()
+    hdd_utilization = check_hdd_utilization_level()
+    mysql_connection = check_mysql_status()
+    telnet_connection = check_telnet_status()
+
+    check_file = read_file()
+    check_file.write("Server Name: " + server_name + "\n" +
+                     "Ram Utilization: " + ram_utilization + "\n" +
+                     "CPU Utilization: " + cpu_utilization + "\n" +
+                     "HDD Utilization: " + hdd_utilization
+                     )
+    close_file(check_file)
     break
