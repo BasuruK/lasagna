@@ -1,3 +1,4 @@
+import time
 """
 LOGGER:- used to log changes to the system and the errors
 """
@@ -31,4 +32,5 @@ def log(message, type="log"):
     :return: None
     """
     log_file = open_file()
-    log_file.write(type + ": " + message)
+    log_file.write(str(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())) + " : " + type + ": " + message)
+    log_file.close()

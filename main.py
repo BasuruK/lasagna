@@ -29,7 +29,7 @@ def check_ram_utilization_level():
 
     if ram_mb < mem_config_level_min:
         return RAG.RED
-    elif mem_config_level_medium < ram_mb > mem_config_level_min:
+    elif mem_config_level_medium <= ram_mb >= mem_config_level_min:
         return RAG.AMBER
     elif ram_mb > mem_config_level_medium:
         return RAG.GREEN
@@ -106,9 +106,8 @@ while True:
 
     check_file = read_file()
     check_file.write("Server Name: " + server_name + "\n" +
-                     "Ram Utilization: " + ram_utilization + "\n" +
-                     "CPU Utilization: " + cpu_utilization + "\n" +
-                     "HDD Utilization: " + hdd_utilization
-                     )
+                     "Ram Utilization: " + str(ram_utilization) + "\n" +
+                     "CPU Utilization: " + str(cpu_utilization) + "\n" +
+                     "HDD Utilization: " + str(hdd_utilization))
     close_file(check_file)
     break
