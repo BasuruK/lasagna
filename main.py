@@ -3,6 +3,7 @@ import threading
 import subprocess
 from lasagna import RAG
 from lasagna import log_manager
+import json
 
 # Ram min config level in MB
 mem_config_level_min = 500
@@ -79,12 +80,12 @@ def get_server_name():
 
 def read_file():
     try:
-        file = open("check_log.txt", "r+")
+        file = open("check_log.json", "r+")
         return file
     except FileNotFoundError:
         print("Log File not found")
         print("File will be created")
-        open("check_log.txt", 'w').close()
+        open("check_log.json", 'w').close()
         read_file()
 
 
@@ -105,9 +106,15 @@ while True:
     telnet_connection = check_telnet_status()
 
     check_file = read_file()
-    check_file.write("Server Name: " + server_name + "\n" +
-                     "Ram Utilization: " + str(ram_utilization) + "\n" +
-                     "CPU Utilization: " + str(cpu_utilization) + "\n" +
-                     "HDD Utilization: " + str(hdd_utilization))
+    data_array = {"Server_Name": server_name, "ram_util": ram_utilization, "cpu_util": cpu_utilization
+                  , "hdd_util": hdd_utilization, "mysql_con": mysql_connection, "telnet_con": telnet_connection}
+
+    json.dump(data_array, check_file)
+    # check_file.write("Server Name: " + server_name + "\n" +
+    #                  "Ram Utilization: " + str(ram_utilization) + "\n" +
+    #                  "CPU Utilization: " + str(cpu_utilization) + "\n" +
+    #                  "HDD Utilization: " + str(hdd_utilization))
     close_file(check_file)
-    break
+
+
+
