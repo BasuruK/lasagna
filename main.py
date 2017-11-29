@@ -4,6 +4,8 @@ import subprocess
 from lasagna import RAG
 from lasagna import log_manager
 import json
+import webbrowser
+from urllib.request import pathname2url
 
 # Ram min config level in MB
 mem_config_level_min = 500
@@ -30,7 +32,7 @@ def check_ram_utilization_level():
 
     if ram_mb < mem_config_level_min:
         return RAG.RED
-    elif mem_config_level_medium <= ram_mb >= mem_config_level_min:
+    elif mem_config_level_medium > ram_mb > mem_config_level_min:
         return RAG.AMBER
     elif ram_mb > mem_config_level_medium:
         return RAG.GREEN
@@ -74,8 +76,10 @@ def check_telnet_status():
 
 
 def get_server_name():
-    svr_name = subprocess.Popen("uname -r", stdout=subprocess.PIPE, shell=True)
-    return str(svr_name.communicate()).split("'")[1].rsplit("\\n")[0]
+    svr_name = str(subprocess.Popen("hostname", stdout=subprocess.PIPE, shell=True).communicate()[0])
+    server_ip = str(subprocess.Popen("hostname -i", stdout=subprocess.PIPE, shell=True).communicate()[0])
+
+    return svr_name.split("'")[1].rsplit("\\n")[0] + " " + server_ip.split("'")[1].rsplit("\\n")[0]
 
 
 def read_file():
@@ -96,6 +100,7 @@ def close_file(file):
         print("Check_log not found")
 
 
+web_hook = False
 # Main functionality
 while True:
     server_name = get_server_name()
@@ -106,15 +111,20 @@ while True:
     telnet_connection = check_telnet_status()
 
     check_file = read_file()
-    data_array = {"Server_Name": server_name, "ram_util": ram_utilization, "cpu_util": cpu_utilization
-                  , "hdd_util": hdd_utilization, "mysql_con": mysql_connection, "telnet_con": telnet_connection}
+    data_array = {"Server_Name": server_name,
+                  "ram_util": ram_utilization,
+                  "cpu_util": cpu_utilization,
+                  "hdd_util": hdd_utilization,
+                  "mysql_con": mysql_connection,
+                  "telnet_con": telnet_connection}
 
     json.dump(data_array, check_file)
-    # check_file.write("Server Name: " + server_name + "\n" +
-    #                  "Ram Utilization: " + str(ram_utilization) + "\n" +
-    #                  "CPU Utilization: " + str(cpu_utilization) + "\n" +
-    #                  "HDD Utilization: " + str(hdd_utilization))
+
     close_file(check_file)
 
+    # Open GUI
+    if web_hook is False:
+        web_hook = True
+        webbrowser.open("http://localhost:63342/lasagna/lasagna/webapp/webapp.html")
 
 
