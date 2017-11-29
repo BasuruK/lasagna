@@ -2,9 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>$Title$</title>
+    <title>Information Monitor</title>
+    <!--Load jQuery-->
+    <script
+            src="https://code.jquery.com/jquery-3.2.1.js"
+            integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
+            crossorigin="anonymous"></script>
+
+    <style>
+        td{
+            align-content: center;
+        }
+    </style>
 </head>
 <body>
-$END$
+<!--Run the main functionality-->
+<script type="text/javascript">
+
+    $(document).ready(
+        // Run only when the document is fully loaded
+        $.getJSON('../../check_log.json', function (data) {
+
+            var number_of_servers;
+            var ram_util = data['ram_util'];
+            var cpu_util = data['cpu_util'];
+            var hdd_util = data['hdd_util'];
+            var server_name = data['Server_Name'];
+            var mysql_stat = data['mysql_con'];
+            var telnet_stat = data['telnet_con'];
+
+            $('#server_name').text(server_name);
+        })
+    );
+
+</script>
+
+    <table id="ram_utilization" border="1|0">
+
+        <tr>
+            <th colspan="4">Server Name</th>
+            <th colspan="4">Ram Utilization</th>
+            <th colspan="4">CPU Utilization</th>
+            <th colspan="4">HDD Utilization</th>
+            <th colspan="4">MYSQL Connection Status</th>
+            <th colspan="4">Telnet Connection Status</th>
+        </tr>
+        <tr>
+            <td colspan="4" id="server_name">None</td>
+            <td colspan="4" id="ram_util">None</td>
+            <td colspan="4" id="cpu_util">None</td>
+            <td colspan="4" id="hdd_util">None</td>
+            <td colspan="4" id="mysql_util">None</td>
+            <td colspan="4" id="telnet_util">None</td>
+
+        </tr>
+
+    </table>
 </body>
 </html>
