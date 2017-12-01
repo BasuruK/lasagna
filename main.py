@@ -35,6 +35,11 @@ hdd_config_level_min = config_file["MinimumHddLevel"]
 hdd_config_level_medium = config_file["AmberHddLevel"]
 hdd_status = RAG.GREEN
 
+# MySQL Threads
+threads_connected = config_file["threads_connected"]
+
+# Telnet Status
+
 
 def check_ram_utilization_level():
     free_mem = os.popen('cat /proc/meminfo | grep "MemFree"')
@@ -110,8 +115,14 @@ def check_file_modification_time():
     # print(file_mod_time)
 
 
-def check_mysql_status():
-    return True
+def check_mysql_thread_status():
+    cursor.execute("SHOW STATUS LIKE 'Threads_Connected'")
+    no_threads = cursor.fetchone()
+
+    if no_threads > threads_connected:
+        return RAG.RED
+    elif no_threads < threads_connected:
+        return RAG.GREEN
 
 
 def check_telnet_status():
@@ -146,24 +157,24 @@ def close_file(file):
 web_hook = False
 # Main functionality
 while True:
-    # server_name = get_server_name()
-    # ram_utilization = check_ram_utilization_level()
-    # cpu_utilization = check_cpu_utilization_level()
-    # hdd_utilization = check_hdd_utilization_level()
-    # mysql_connection = check_mysql_status()
-    # telnet_connection = check_telnet_status()
-    #
-    # check_file = read_file()
-    # data_array = {"Server_Name": server_name,
-    #               "ram_util": ram_utilization,
-    #               "cpu_util": cpu_utilization,
-    #               "hdd_util": hdd_utilization,
-    #               "mysql_con": mysql_connection,
-    #               "telnet_con": telnet_connection}
-    #
-    # json.dump(data_array, check_file)
-    #
-    # close_file(check_file)
+    server_name = get_server_name()
+    ram_utilization = check_ram_utilization_level()
+    cpu_utilization = check_cpu_utilization_level()
+    hdd_utilization = check_hdd_utilization_level()
+    mysql_connection = check_mysql_thread_status()
+    telnet_connection = check_telnet_status()
+
+    check_file = read_file()
+    data_array = {"Server_Name": server_name,
+                  "ram_util": ram_utilization,
+                  "cpu_util": cpu_utilization,
+                  "hdd_util": hdd_utilization,
+                  "mysql_con": mysql_connection,
+                  "telnet_con": telnet_connection}
+
+    json.dump(data_array, check_file)
+
+    close_file(check_file)
 
     check_file_modification_time()
     break
