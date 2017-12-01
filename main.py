@@ -118,6 +118,7 @@ def check_file_modification_time():
 def check_mysql_thread_status():
     cursor.execute("SHOW STATUS LIKE 'Threads_Connected'")
     no_threads = cursor.fetchone()
+    no_threads = int(no_threads[1])
 
     if no_threads > threads_connected:
         return RAG.RED
@@ -126,7 +127,13 @@ def check_mysql_thread_status():
 
 
 def check_telnet_status():
-    return True
+    port = str(subprocess.Popen("nc -z 127.0.0.1 22; echo $?", stdout=subprocess.PIPE, shell=True).communicate()[0]).split("\\n")[0].split("'")[1]
+    if port == 1:
+        # Port is closed
+        return False
+    elif port == 0:
+        # Port is closed
+        return True
 
 
 def get_server_name():
@@ -177,4 +184,5 @@ while True:
     close_file(check_file)
 
     check_file_modification_time()
+
     break
