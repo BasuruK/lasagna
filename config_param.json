@@ -1,0 +1,16 @@
+{
+  "MinimumRamLevel": 500,
+  "AmberRamLevel":5000,
+
+  "MinimumCpuLevel":10,
+  "AmberCpuLevel":30,
+
+  "MinimumHddLevel":1000,
+  "AmberHddLevel":10000,
+
+  "mysql_uname": "root",
+  "mysql_pass": "1234",
+  "mysql_dbname":"LSEG",
+  "mysql_hostname": "localhost"
+
+}
