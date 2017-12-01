@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<link>
-    <meta charset="UTF-8">
-    <title>Information Monitor</title>
+<meta charset="UTF-8">
+<title>Information Monitor</title>
+
+<head>
     <!--Load jQuery-->
     <script
             src="https://code.jquery.com/jquery-3.2.1.js"
@@ -32,11 +33,13 @@
 <!--Run the main functionality-->
 <script type="text/javascript">
 
+    var number_of_servers = null;
+
     $(document).ready(
         // Run only when the document is fully loaded
-        $.getJSON('../../check_log.json', function (data) {
+        $.getJSON('/check_log.json', function (data) {
 
-            var number_of_servers;
+            number_of_servers = 2;
             var ram_util = data['ram_util'];
             var cpu_util = data['cpu_util'];
             var hdd_util = data['hdd_util'];
@@ -80,6 +83,7 @@
             <th scope="col" colspan="4">MYSQL Connection Status</th>
             <th scope="col" colspan="4">Telnet Connection Status</th>
         </tr>
+
         <tr>
             <td colspan="7" id="server_name">None</td>
             <td colspan="4" id="ram_util" >None</td>
