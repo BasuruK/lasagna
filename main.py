@@ -5,21 +5,34 @@ from lasagna import RAG
 from lasagna import log_manager
 import json
 import webbrowser
-from urllib.request import pathname2url
+import MySQLdb
+import time
+from datetime import datetime
+
+# Open Config Files
+with open("config_param.json", "r") as f:
+    config_file = json.load(f)
+
+# Connect to the Database
+db = MySQLdb.connect(config_file["mysql_hostname"],
+                     config_file["mysql_uname"],
+                     config_file["mysql_pass"],
+                     config_file["mysql_dbname"])
+cursor = db.cursor()
 
 # Ram min config level in MB
-mem_config_level_min = 500
-mem_config_level_medium = 5000
+mem_config_level_min = config_file["MinimumRamLevel"]
+mem_config_level_medium = config_file["AmberRamLevel"]
 mem_status = RAG.GREEN
 
 # CPU Utilization config level
-cpu_config_level_min = 10
-cpu_config_level_medium = 30
+cpu_config_level_min = config_file["MinimumCpuLevel"]
+cpu_config_level_medium = config_file["AmberCpuLevel"]
 cpu_status = RAG.GREEN
 
 # HDD Utilization config level
-hdd_config_level_min = 1000
-hdd_config_level_medium = 10000
+hdd_config_level_min = config_file["MinimumHddLevel"]
+hdd_config_level_medium = config_file["AmberHddLevel"]
 hdd_status = RAG.GREEN
 
 
@@ -64,7 +77,37 @@ def check_hdd_utilization_level():
 
 
 def check_file_modification_time():
-    return True
+    file_mod_time = str(subprocess.Popen("find config_param.json -maxdepth 0 -printf '%TY-%Tm-%Td %TH:%TM:%TS'",
+                                         stdout=subprocess.PIPE, shell=True).communicate()[0]).split("'")[1].split(".")[0]
+
+    # Check the last modified time
+    cursor.execute("SELECT modTime FROM modification ORDER BY id DESC LIMIT 1")
+    last_mod_time = cursor.fetchone()
+
+    if last_mod_time is None:
+        # No data in the table
+        sql = "INSERT INTO modification (property, modTime, ram_min, ram_amber, cpu_min, cpu_amber, hdd_min, hdd_amber) VALUES ('config_log.json', '" + file_mod_time + "', '" + str(mem_config_level_min) + "', '" + str(mem_config_level_medium) + "', '" + str(cpu_config_level_min) + "','" + str(cpu_config_level_medium) + "', '" + str(hdd_config_level_min) + "', '" + str(hdd_config_level_medium) + "');"
+        cursor.execute(sql)
+        db.autocommit("modification")
+    else:
+        # Check weather the file is modified in the later date
+        file_mod_time = datetime.strptime(file_mod_time, '%Y-%m-%d %H:%M:%S')
+        last_mod_time = datetime.strptime(last_mod_time[0], '%Y-%m-%d %H:%M:%S')
+
+        if last_mod_time < file_mod_time:
+            # File has been modified, add the data
+            sql = "INSERT INTO modification (property, modTime, ram_min, ram_amber, cpu_min, cpu_amber, hdd_min, hdd_amber) VALUES ('config_log.json', '" + str(file_mod_time) + "', '" + str(
+                mem_config_level_min) + "', '" + str(mem_config_level_medium) + "', '" + str(
+                cpu_config_level_min) + "','" + str(cpu_config_level_medium) + "', '" + str(
+                hdd_config_level_min) + "', '" + str(hdd_config_level_medium) + "');"
+
+            cursor.execute(sql)
+            db.autocommit("modification")
+        else:
+            print("No File Modifications detected")
+
+    # print(last_mod_time)
+    # print(file_mod_time)
 
 
 def check_mysql_status():
@@ -103,28 +146,24 @@ def close_file(file):
 web_hook = False
 # Main functionality
 while True:
-    server_name = get_server_name()
-    ram_utilization = check_ram_utilization_level()
-    cpu_utilization = check_cpu_utilization_level()
-    hdd_utilization = check_hdd_utilization_level()
-    mysql_connection = check_mysql_status()
-    telnet_connection = check_telnet_status()
+    # server_name = get_server_name()
+    # ram_utilization = check_ram_utilization_level()
+    # cpu_utilization = check_cpu_utilization_level()
+    # hdd_utilization = check_hdd_utilization_level()
+    # mysql_connection = check_mysql_status()
+    # telnet_connection = check_telnet_status()
+    #
+    # check_file = read_file()
+    # data_array = {"Server_Name": server_name,
+    #               "ram_util": ram_utilization,
+    #               "cpu_util": cpu_utilization,
+    #               "hdd_util": hdd_utilization,
+    #               "mysql_con": mysql_connection,
+    #               "telnet_con": telnet_connection}
+    #
+    # json.dump(data_array, check_file)
+    #
+    # close_file(check_file)
 
-    check_file = read_file()
-    data_array = {"Server_Name": server_name,
-                  "ram_util": ram_utilization,
-                  "cpu_util": cpu_utilization,
-                  "hdd_util": hdd_utilization,
-                  "mysql_con": mysql_connection,
-                  "telnet_con": telnet_connection}
-
-    json.dump(data_array, check_file)
-
-    close_file(check_file)
-
-    # Open GUI
-    if web_hook is False:
-        web_hook = True
-        webbrowser.open("http://localhost:63342/lasagna/lasagna/webapp/webapp.html")
-
-
+    check_file_modification_time()
+    break
