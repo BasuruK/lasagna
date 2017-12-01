@@ -9,6 +9,7 @@
   "AmberHddLevel":10000,
 
   "threads_connected": 2,
+  "open_tables": 250,
 
   "mysql_uname": "root",
   "mysql_pass": "1234",

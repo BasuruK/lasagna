@@ -38,7 +38,8 @@ hdd_status = RAG.GREEN
 # MySQL Threads
 threads_connected = config_file["threads_connected"]
 
-# Telnet Status
+# MySQL open tables Status
+open_tables = config_file["open_tables"]
 
 
 def check_ram_utilization_level():
@@ -126,6 +127,16 @@ def check_mysql_thread_status():
         return RAG.GREEN
 
 
+def check_mysql_open_tables_status():
+    cursor.execute("SHOW STATUS LIKE 'Open_tables'")
+    tables = int(cursor.fetchone()[1])
+
+    if tables > open_tables:
+        return RAG.RED
+    elif tables < open_tables:
+        return RAG.GREEN
+
+
 def check_telnet_status():
     port = str(subprocess.Popen("nc -z 127.0.0.1 22; echo $?", stdout=subprocess.PIPE, shell=True).communicate()[0]).split("\\n")[0].split("'")[1]
     if port == 1:
@@ -168,15 +179,16 @@ while True:
     ram_utilization = check_ram_utilization_level()
     cpu_utilization = check_cpu_utilization_level()
     hdd_utilization = check_hdd_utilization_level()
-    mysql_connection = check_mysql_thread_status()
+    mysql_threads_active = check_mysql_thread_status()
     telnet_connection = check_telnet_status()
+    mysql_open_tables = check_mysql_open_tables_status()
 
     check_file = read_file()
     data_array = {"Server_Name": server_name,
                   "ram_util": ram_utilization,
                   "cpu_util": cpu_utilization,
                   "hdd_util": hdd_utilization,
-                  "mysql_con": mysql_connection,
+                  "mysql_con": mysql_threads_active,
                   "telnet_con": telnet_connection}
 
     json.dump(data_array, check_file)
