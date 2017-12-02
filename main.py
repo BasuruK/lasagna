@@ -145,7 +145,7 @@ def check_mysql_thread_status():
 
     if no_threads > threads_connected:
         return RAG.RED
-    elif no_threads < threads_connected:
+    elif no_threads <= threads_connected:
         return RAG.GREEN
 
 
@@ -287,6 +287,20 @@ def format_html_page():
 
 
 def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_opn_tbl_stat, telnet_stat, file_mod_stat):
+    """
+    Create HTML Page with the data recived
+    :param server_name: Name of the server
+    :param ram_util: Ram RAG Status
+    :param cpu_util: CPU RAG Status
+    :param hdd_util: HDD RAG Status
+    :param mysql_t_stat: MySQL Threads Connected RAG Status
+    :param mysql_opn_tbl_stat: MySQL Open Tables RAG Status
+    :param telnet_stat: Telnet RAG Status
+    :param file_mod_stat: File Modification data
+    :return:
+    """
+    modifications_table = None
+
     html_body = """
     <table id="utilization" border="1|0" class="table table-striped table-dark">
 
@@ -301,6 +315,7 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
         </tr>
         <tr>\n
     """
+
     html_body += "<td colspan='3' id='server_name'>" + server_name + "</td>\n"
     html_body += "<td colspan='2' id='ram_util'>" + str(ram_util) + "</td>\n"
     html_body += "<td colspan='2' id='cpu_util'>" + str(cpu_util) + "</td>\n"
@@ -312,31 +327,48 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
     html_body += """</tr>\n
     </table>\n
     """
-    print(file_mod_stat)
 
-    if file_mod_stat is not None
-        
-        file_mod_table = """
+    if file_mod_stat is not None:
+
+        file_mod_table_header = """
+        <h3>Configuration parameters changed at the previous moment</h3>\n
         <table id="file_mod" border="1|0" class="table table-striped table-dark">
         <tr>
-            <th scope="col" colspan="7">File Name</th>
-            <th scope="col" colspan="4">Ram Utilization</th>
-            <th scope="col" colspan="4">CPU Utilization</th>
-            <th scope="col" colspan="4">HDD Utilization</th>
-            <th scope="col" colspan="4">MYSQL Threads Status</th>
-            <th scope="col" colspan="4">MYSQL Open Table Status</th>
-            <th scope="col" colspan="4">Telnet Connection Status</th>
+            <th scope="col" colspan="5">File Name</th>
+            <th scope="col" colspan="2">Modfied Time Name</th>
+            <th scope="col" colspan="2">Minimum Ram Level</th>
+            <th scope="col" colspan="2">Amber Ram Level</th>
+            <th scope="col" colspan="2">Minimum CPU Level</th>
+            <th scope="col" colspan="2">Amber CPU Level</th>
+            <th scope="col" colspan="2">Min HDD Level</th>
+            <th scope="col" colspan="2">Amber HDD Level</th>
         </tr>
         <tr>
         """
 
+        file_mod_table_body = "<td colspan='5' id='file_name'>" + str(file_mod_stat[1]) + "</td>\n"
+        file_mod_table_body += "<td colspan='2' id='modtime'>" + str(file_mod_stat[2]) + "</td>\n"
+        file_mod_table_body += "<td colspan='2' id='min_ram'>" + str(file_mod_stat[3]) + "</td>\n"
+        file_mod_table_body += "<td colspan='2' id='amber_ram'>" + str(file_mod_stat[4]) + "</td>\n"
+        file_mod_table_body += "<td colspan='2' id='min_cpu'>" + str(file_mod_stat[5]) + "</td>\n"
+        file_mod_table_body += "<td colspan='2' id='amber_cpu'>" + str(file_mod_stat[6]) + "</td>\n"
+        file_mod_table_body += "<td colspan='2' id='min_hdd'>" + str(file_mod_stat[7]) + "</td>\n"
+        file_mod_table_body += "<td colspan='2' id='amber_hdd'>" + str(file_mod_stat[7]) + "</td>\n"
+
+        file_mod_table_footer = """</tr>\n
+        </table>\n"""
+
+        modifications_table = file_mod_table_header + file_mod_table_body + file_mod_table_footer
+
     # get the header and footer content
     header, footer = format_html_page()
     # Make the final page
-    html_page = header + html_body + footer
+    if file_mod_stat is not None:
+        html_page = header + html_body + str(modifications_table) + footer
+    else:
+        html_page = header + html_body + footer
 
     # Save the html page
-
     page_fp = read_html_file()
     page_fp.write(html_page)
     close_html_file(page_fp)
