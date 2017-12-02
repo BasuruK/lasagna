@@ -1,0 +1,13 @@
+Sat, 02 Dec 2017 16:15:28 : LOG: HTML Page successfully created
+Sat, 02 Dec 2017 16:15:28 : LOG: Email Sent to address bestbasuru@live.com
+Sat, 02 Dec 2017 16:15:42 : ERR: HTML File not found, new file will be created
+Sat, 02 Dec 2017 16:15:42 : LOG: HTML Page successfully created
+Sat, 02 Dec 2017 16:15:42 : LOG: Email Sent to address bestbasuru@live.com
+Sat, 02 Dec 2017 16:16:01 : LOG: HTML Page successfully created
+Sat, 02 Dec 2017 16:16:01 : LOG: Email Sent to address bestbasuru@live.com
+Sat, 02 Dec 2017 16:16:16 : LOG: config_param.json File modification detected
+Sat, 02 Dec 2017 16:16:16 : LOG: HTML Page successfully created
+Sat, 02 Dec 2017 16:16:16 : LOG: Email Sent to address bestbasuru@live.com
+Sat, 02 Dec 2017 16:16:29 : LOG: config_param.json File modification detected
+Sat, 02 Dec 2017 16:16:29 : LOG: HTML Page successfully created
+Sat, 02 Dec 2017 16:16:29 : LOG: Email Sent to address bestbasuru@live.com
