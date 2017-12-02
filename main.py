@@ -1,22 +1,30 @@
 import os
 import subprocess
 from lasagna import RAG
-from lasagna import log_manager
+from lasagna.log_manager import log, ERROR, LOGS
 import json
 import webbrowser
 import MySQLdb
 from datetime import datetime
 
 # Open Config Files
-with open("config_param.json", "r") as f:
-    config_file = json.load(f)
+try:
+    with open("config_param.json", "r") as f:
+        config_file = json.load(f)
+except FileNotFoundError:
+    log("config_param.json file does not exist", ERROR)
 
 # Connect to the Database
-db = MySQLdb.connect(config_file["mysql_hostname"],
-                     config_file["mysql_uname"],
-                     config_file["mysql_pass"],
-                     config_file["mysql_dbname"])
-cursor = db.cursor()
+try:
+    db = MySQLdb.connect(config_file["mysql_hostname"],
+                         config_file["mysql_uname"],
+                         config_file["mysql_pass"],
+                         config_file["mysql_dbname"])
+    cursor = db.cursor()
+except MySQLdb.DatabaseError:
+    log("Database Not initialized, Please create a Database from the name mentioned in the config_param.json file", ERROR)
+    exit(1)
+
 
 # Ram min config level in MB
 mem_config_level_min = config_file["MinimumRamLevel"]
@@ -102,8 +110,7 @@ def check_file_modification_time():
     :return: Last modified time | None
     """
     file_mod_time = str(subprocess.Popen("find config_param.json -maxdepth 0 -printf '%TY-%Tm-%Td %TH:%TM:%TS'",
-                                         stdout=subprocess.PIPE, shell=True).communicate()[0]).split("'")[1].split(".")[
-        0]
+                                         stdout=subprocess.PIPE, shell=True).communicate()[0]).split("'")[1].split(".")[0]
 
     # Check the last modified time
     cursor.execute("SELECT modTime FROM modification ORDER BY id DESC LIMIT 1")
@@ -138,7 +145,6 @@ def check_file_modification_time():
             new_mod_time = cursor.fetchone()
             return new_mod_time
         else:
-            print("No File Modifications detected")
             return None
 
 
@@ -207,6 +213,7 @@ def read_html_file():
         page_fp = open("webapp/webapp.html", 'r+')
         return page_fp
     except FileNotFoundError:
+        log("HTML File not found, new file will be created", ERROR)
         print("HTML file not found, new file will be created")
         open("webapp/webapp.html", 'w').close()
         return read_html_file()
@@ -378,6 +385,7 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
     # Make the final page
     if file_mod_stat is not None:
         html_page = header + html_body + str(modifications_table) + footer
+        log("config_param.json File modification detected", LOGS)
     else:
         html_page = header + html_body + footer
 
@@ -387,6 +395,7 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
     page_fp.write(html_page)
     close_html_file(page_fp)
 
+    log("HTML Page successfully created", LOGS)
     return html_page
 
 
@@ -412,7 +421,11 @@ def send_email(html_template, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_
         if value is "RED":
             subject_line += " RED " + str(datetime.now()) + " " + str(key)
 
-    mail = subprocess.Popen('mail -s "$(echo "' + subject_line + '\nContent-Type: text/html")" ' + admin_email + ' < ' + os.path.abspath("webapp/webapp.html") + '', stdout=subprocess.PIPE, shell=True)
+    try:
+        mail = subprocess.Popen('mail -s "$(echo "' + subject_line + '\nContent-Type: text/html")" ' + admin_email + ' < ' + os.path.abspath("webapp/webapp.html") + '', stdout=subprocess.PIPE, shell=True)
+        log("Email Sent to address " + admin_email, LOGS)
+    except FileNotFoundError:
+        log("Email not sent, HTML file not found", ERROR)
 
 
 web_hook = False
