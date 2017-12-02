@@ -126,7 +126,7 @@ def check_file_modification_time():
             db.autocommit("modification")
 
             # Return new modified time
-            cursor.execute("SELECT modTime FROM modification ORDER BY id DESC LIMIT 1")
+            cursor.execute("SELECT * FROM modification ORDER BY id DESC LIMIT 1")
             new_mod_time = cursor.fetchone()
             return new_mod_time
         else:
@@ -214,10 +214,30 @@ def close_file(file):
         print("Check_log not found")
 
 
-def format_html_page(body_data):
+def read_html_file():
+    """
+    opens the html file, if not exists, create new file
+    :return: File pointer to the HTML file
+    """
+    try:
+        page_fp = open("webapp/webapp.html", 'r+')
+        return page_fp
+    except FileNotFoundError:
+        print("HTML file not found, new file will be created")
+        open("webapp/webapp.html", 'w').close()
+        read_html_file()
+
+
+def close_html_file(file):
+    try:
+        file.close()
+    except TypeError:
+        pass
+
+
+def format_html_page():
     """
     Format an HTML Page from the input data
-    :param body_data: Table data displayed in the middle
     """
     html_format_header = """
         <!DOCTYPE html>
@@ -258,7 +278,64 @@ def format_html_page(body_data):
     </body>
 </html>
     """
-    
+    return html_format_header, html_format_footer
+
+
+def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_opn_tbl_stat, telnet_stat, file_mod_stat):
+    html_body = """
+    <table id="utilization" border="1|0" class="table table-striped table-dark">
+
+        <tr>
+            <th scope="col" colspan="7">Server Name</th>
+            <th scope="col" colspan="4">Ram Utilization</th>
+            <th scope="col" colspan="4">CPU Utilization</th>
+            <th scope="col" colspan="4">HDD Utilization</th>
+            <th scope="col" colspan="4">MYSQL Threads Status</th>
+            <th scope="col" colspan="4">MYSQL Open Table Status</th>
+            <th scope="col" colspan="4">Telnet Connection Status</th>
+        </tr>
+        <tr>
+    """
+    html_body += "<td colspan='7' id='server_name'>" + server_name + "</td>"
+    html_body += "<td colspan='7' id='ram_util'>" + ram_util + "</td>"
+    html_body += "<td colspan='7' id='cpu_util'>" + cpu_util + "</td>"
+    html_body += "<td colspan='7' id='hdd_util'>" + hdd_util + "</td>"
+    html_body += "<td colspan='7' id='mysql_util'>" + mysql_t_stat + "</td>"
+    html_body += "<td colspan='7' id='open_table'>" + mysql_opn_tbl_stat + "</td>"
+    html_body += "<td colspan='7' id='telnet_util'>" + str(telnet_stat) + "</td>"
+
+    html_body += """</tr>
+    </table>
+    """
+
+    if file_mod_stat is not None:
+        """TODO: complete this"""
+        file_mod_table = """
+        <table id="utilization" border="1|0" class="table table-striped table-dark">
+        <tr>
+            <th scope="col" colspan="7">File Name</th>
+            <th scope="col" colspan="4">Ram Utilization</th>
+            <th scope="col" colspan="4">CPU Utilization</th>
+            <th scope="col" colspan="4">HDD Utilization</th>
+            <th scope="col" colspan="4">MYSQL Threads Status</th>
+            <th scope="col" colspan="4">MYSQL Open Table Status</th>
+            <th scope="col" colspan="4">Telnet Connection Status</th>
+        </tr>
+        <tr>
+        """
+
+    # get the header and footer content
+    header, footer = format_html_page()
+    # Make the final page
+    html_page = header + html_body + footer
+
+    # Save the html page
+
+
+    page_fp = read_html_file()
+    page_fp.write(html_page)
+    page_fp.close()
+
 
 web_hook = False
 # Main functionality
@@ -285,5 +362,8 @@ while True:
 
     check_file_modification_time()
 
+    html_body_data_parser(server_name=server_name, ram_util=ram_utilization, cpu_util=cpu_utilization,
+                          hdd_util=hdd_utilization, mysql_t_stat=mysql_threads_active,
+                          mysql_opn_tbl_stat=mysql_open_tables, telnet_stat=telnet_connection, file_mod_stat=None)
 
     break
