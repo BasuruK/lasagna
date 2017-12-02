@@ -1,0 +1,93 @@
+
+        <!DOCTYPE html>
+    <html lang="en">
+    <meta charset="UTF-8">
+    <title>Information Monitor</title>
+
+    <head>
+        <!--Load jQuery-->
+        <script
+                src="https://code.jquery.com/jquery-3.2.1.js"
+                integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
+                crossorigin="anonymous">
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"
+                integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+                crossorigin="anonymous">
+        </script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
+                integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+                crossorigin="anonymous">
+        </script>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+              integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb"
+              crossorigin="anonymous">
+
+        <style>
+            td{
+                text-align: center;
+            }
+            tr{
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+    <script>
+        $(document).ready(function () {
+            var ram_util = $('#ram_util').text();
+            var cpu_util = $('#cpu_util').text();
+            var hdd_util = $('#hdd_util').text();
+            var mysql_t_stat = $('#mysql_util').text();
+            var mysql_opn_stat = $('#open_table').text();
+            var telnet_stat = $('#tel_net').text();
+
+            colorProfiler(['#ram_util','#cpu_util', '#hdd_util', '#mysql_util', '#open_table', '#tel_net'],[ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_opn_stat, telnet_stat]);
+
+            function colorProfiler(ids, vals){
+                var length = ids.length;
+
+                for(var i = 0; i < length; i++){
+                    if(vals[i] === "GREEN"){
+                        $(ids[i]).css('background-color','green');
+                    }
+                    else if (vals[i] === "AMBER"){
+                        $(ids[i]).css('background-color','orange');
+                    }
+                    else if (vals[i] === "RED"){
+                        $(ids[i]).css('background-color','red');
+                    }
+                }
+            }
+        })
+    </script>
+        
+    <table id="utilization" border="1|0" class="table table-striped table-dark">
+
+        <tr>
+            <th scope="col" colspan="3">Server Name</th>
+            <th scope="col" colspan="2">Ram Utilization</th>
+            <th scope="col" colspan="2">CPU Utilization</th>
+            <th scope="col" colspan="2">HDD Utilization</th>
+            <th scope="col" colspan="2">MYSQL Threads Status</th>
+            <th scope="col" colspan=2">MYSQL Open Table Status</th>
+            <th scope="col" colspan="2">Telnet Connection Status</th>
+        </tr>
+        <tr>
+
+    <td colspan='3' id='server_name'>basuruk-Lenovo-Y50-70-Touch 127.0.1.1</td>
+<td colspan='2' id='ram_util'>AMBER</td>
+<td colspan='2' id='cpu_util'>RED</td>
+<td colspan='2' id='hdd_util'>GREEN</td>
+<td colspan='2' id='mysql_util'>None</td>
+<td colspan='2' id='open_table'>GREEN</td>
+<td colspan='2' id='tel_net'>RED</td>
+</tr>
+
+    </table>
+
+    
+    </body>
+</html>
+     

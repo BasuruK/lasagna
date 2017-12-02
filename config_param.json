@@ -15,5 +15,4 @@
   "mysql_pass": "1234",
   "mysql_dbname":"LSEG",
   "mysql_hostname": "localhost"
-
 }

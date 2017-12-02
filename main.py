@@ -168,13 +168,13 @@ def check_telnet_status():
     Check Telnet status of the server
     :return: True if port is open and accepting connections | False if otherwise
     """
-    port = str(subprocess.Popen("nc -z 127.0.0.1 22; echo $?", stdout=subprocess.PIPE, shell=True).communicate()[0]).split("\\n")[0].split("'")[1]
+    port = int(str(subprocess.Popen("nc -z 127.0.0.1 22; echo $?", stdout=subprocess.PIPE, shell=True).communicate()[0]).split("\\n")[0].split("'")[1])
     if port == 1:
         # Port is closed
-        return False
+        return RAG.RED
     elif port == 0:
         # Port is closed
-        return True
+        return RAG.GREEN
 
 
 def get_server_name():
@@ -188,32 +188,6 @@ def get_server_name():
     return svr_name.split("'")[1].rsplit("\\n")[0] + " " + server_ip.split("'")[1].rsplit("\\n")[0]
 
 
-def read_file():
-    """
-    Open the 'check_log.json' file for reading
-    :return: File pointer
-    """
-    try:
-        file = open("check_log.json", "r+")
-        return file
-    except FileNotFoundError:
-        print("Log File not found")
-        print("File will be created")
-        open("check_log.json", 'w').close()
-        read_file()
-
-
-def close_file(file):
-    """
-    Close the file
-    :param file: file pointer
-    """
-    try:
-        file.close()
-    except FileNotFoundError:
-        print("Check_log not found")
-
-
 def read_html_file():
     """
     opens the html file, if not exists, create new file
@@ -225,7 +199,7 @@ def read_html_file():
     except FileNotFoundError:
         print("HTML file not found, new file will be created")
         open("webapp/webapp.html", 'w').close()
-        read_html_file()
+        return read_html_file()
 
 
 def close_html_file(file):
@@ -269,9 +243,40 @@ def format_html_page():
             td{
                 text-align: center;
             }
+            tr{
+                text-align: center;
+            }
         </style>
     </head>
     <body>
+    <script>
+        $(document).ready(function () {
+            var ram_util = $('#ram_util').text();
+            var cpu_util = $('#cpu_util').text();
+            var hdd_util = $('#hdd_util').text();
+            var mysql_t_stat = $('#mysql_util').text();
+            var mysql_opn_stat = $('#open_table').text();
+            var telnet_stat = $('#tel_net').text();
+
+            colorProfiler(['#ram_util','#cpu_util', '#hdd_util', '#mysql_util', '#open_table', '#tel_net'],[ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_opn_stat, telnet_stat]);
+
+            function colorProfiler(ids, vals){
+                var length = ids.length;
+
+                for(var i = 0; i < length; i++){
+                    if(vals[i] === "GREEN"){
+                        $(ids[i]).css('background-color','green');
+                    }
+                    else if (vals[i] === "AMBER"){
+                        $(ids[i]).css('background-color','orange');
+                    }
+                    else if (vals[i] === "RED"){
+                        $(ids[i]).css('background-color','red');
+                    }
+                }
+            }
+        })
+    </script>
         """
 
     html_format_footer = """
@@ -286,32 +291,33 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
     <table id="utilization" border="1|0" class="table table-striped table-dark">
 
         <tr>
-            <th scope="col" colspan="7">Server Name</th>
-            <th scope="col" colspan="4">Ram Utilization</th>
-            <th scope="col" colspan="4">CPU Utilization</th>
-            <th scope="col" colspan="4">HDD Utilization</th>
-            <th scope="col" colspan="4">MYSQL Threads Status</th>
-            <th scope="col" colspan="4">MYSQL Open Table Status</th>
-            <th scope="col" colspan="4">Telnet Connection Status</th>
+            <th scope="col" colspan="3">Server Name</th>
+            <th scope="col" colspan="2">Ram Utilization</th>
+            <th scope="col" colspan="2">CPU Utilization</th>
+            <th scope="col" colspan="2">HDD Utilization</th>
+            <th scope="col" colspan="2">MYSQL Threads Status</th>
+            <th scope="col" colspan=2">MYSQL Open Table Status</th>
+            <th scope="col" colspan="2">Telnet Connection Status</th>
         </tr>
-        <tr>
+        <tr>\n
     """
-    html_body += "<td colspan='7' id='server_name'>" + server_name + "</td>"
-    html_body += "<td colspan='7' id='ram_util'>" + ram_util + "</td>"
-    html_body += "<td colspan='7' id='cpu_util'>" + cpu_util + "</td>"
-    html_body += "<td colspan='7' id='hdd_util'>" + hdd_util + "</td>"
-    html_body += "<td colspan='7' id='mysql_util'>" + mysql_t_stat + "</td>"
-    html_body += "<td colspan='7' id='open_table'>" + mysql_opn_tbl_stat + "</td>"
-    html_body += "<td colspan='7' id='telnet_util'>" + str(telnet_stat) + "</td>"
+    html_body += "<td colspan='3' id='server_name'>" + server_name + "</td>\n"
+    html_body += "<td colspan='2' id='ram_util'>" + str(ram_util) + "</td>\n"
+    html_body += "<td colspan='2' id='cpu_util'>" + str(cpu_util) + "</td>\n"
+    html_body += "<td colspan='2' id='hdd_util'>" + str(hdd_util) + "</td>\n"
+    html_body += "<td colspan='2' id='mysql_util'>" + str(mysql_t_stat) + "</td>\n"
+    html_body += "<td colspan='2' id='open_table'>" + str(mysql_opn_tbl_stat) + "</td>\n"
+    html_body += "<td colspan='2' id='tel_net'>" + str(telnet_stat) + "</td>\n"
 
-    html_body += """</tr>
-    </table>
+    html_body += """</tr>\n
+    </table>\n
     """
+    print(file_mod_stat)
 
-    if file_mod_stat is not None:
-        """TODO: complete this"""
+    if file_mod_stat is not None
+        
         file_mod_table = """
-        <table id="utilization" border="1|0" class="table table-striped table-dark">
+        <table id="file_mod" border="1|0" class="table table-striped table-dark">
         <tr>
             <th scope="col" colspan="7">File Name</th>
             <th scope="col" colspan="4">Ram Utilization</th>
@@ -331,10 +337,9 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
 
     # Save the html page
 
-
     page_fp = read_html_file()
     page_fp.write(html_page)
-    page_fp.close()
+    close_html_file(page_fp)
 
 
 web_hook = False
@@ -348,22 +353,13 @@ while True:
     telnet_connection = check_telnet_status()
     mysql_open_tables = check_mysql_open_tables_status()
 
-    check_file = read_file()
-    data_array = {"Server_Name": server_name,
-                  "ram_util": ram_utilization,
-                  "cpu_util": cpu_utilization,
-                  "hdd_util": hdd_utilization,
-                  "mysql_con": mysql_threads_active,
-                  "telnet_con": telnet_connection}
-
-    json.dump(data_array, check_file)
-
-    close_file(check_file)
-
-    check_file_modification_time()
-
-    html_body_data_parser(server_name=server_name, ram_util=ram_utilization, cpu_util=cpu_utilization,
-                          hdd_util=hdd_utilization, mysql_t_stat=mysql_threads_active,
-                          mysql_opn_tbl_stat=mysql_open_tables, telnet_stat=telnet_connection, file_mod_stat=None)
+    html_body_data_parser(server_name=server_name,
+                          ram_util=ram_utilization,
+                          cpu_util=cpu_utilization,
+                          hdd_util=hdd_utilization,
+                          mysql_t_stat=mysql_threads_active,
+                          mysql_opn_tbl_stat=mysql_open_tables,
+                          telnet_stat=telnet_connection,
+                          file_mod_stat=check_file_modification_time())
 
     break
