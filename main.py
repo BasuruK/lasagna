@@ -209,6 +209,10 @@ def close_html_file(file):
         pass
 
 
+def truncate_html_file(file):
+    open("webapp/webapp.html", 'w').close()
+
+
 def format_html_page():
     """
     Format an HTML Page from the input data
@@ -370,8 +374,16 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
 
     # Save the html page
     page_fp = read_html_file()
+    truncate_html_file(page_fp)
     page_fp.write(html_page)
     close_html_file(page_fp)
+
+    return html_page
+
+def send_email(html_template):
+
+
+
 
 
 web_hook = False
