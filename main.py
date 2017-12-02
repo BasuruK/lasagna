@@ -99,7 +99,8 @@ def check_file_modification_time():
     :return: Last modified time | None
     """
     file_mod_time = str(subprocess.Popen("find config_param.json -maxdepth 0 -printf '%TY-%Tm-%Td %TH:%TM:%TS'",
-                                         stdout=subprocess.PIPE, shell=True).communicate()[0]).split("'")[1].split(".")[0]
+                                         stdout=subprocess.PIPE, shell=True).communicate()[0]).split("'")[1].split(".")[
+        0]
 
     # Check the last modified time
     cursor.execute("SELECT modTime FROM modification ORDER BY id DESC LIMIT 1")
@@ -107,7 +108,10 @@ def check_file_modification_time():
 
     if last_mod_time is None:
         # No data in the table
-        sql = "INSERT INTO modification (property, modTime, ram_min, ram_amber, cpu_min, cpu_amber, hdd_min, hdd_amber) VALUES ('config_log.json', '" + file_mod_time + "', '" + str(mem_config_level_min) + "', '" + str(mem_config_level_medium) + "', '" + str(cpu_config_level_min) + "','" + str(cpu_config_level_medium) + "', '" + str(hdd_config_level_min) + "', '" + str(hdd_config_level_medium) + "');"
+        sql = "INSERT INTO modification (property, modTime, ram_min, ram_amber, cpu_min, cpu_amber, hdd_min, hdd_amber) VALUES ('config_log.json', '" + file_mod_time + "', '" + str(
+            mem_config_level_min) + "', '" + str(mem_config_level_medium) + "', '" + str(
+            cpu_config_level_min) + "','" + str(cpu_config_level_medium) + "', '" + str(
+            hdd_config_level_min) + "', '" + str(hdd_config_level_medium) + "');"
         cursor.execute(sql)
         db.autocommit("modification")
     else:
@@ -117,7 +121,8 @@ def check_file_modification_time():
 
         if last_mod_time < file_mod_time:
             # File has been modified, add the data
-            sql = "INSERT INTO modification (property, modTime, ram_min, ram_amber, cpu_min, cpu_amber, hdd_min, hdd_amber) VALUES ('config_log.json', '" + str(file_mod_time) + "', '" + str(
+            sql = "INSERT INTO modification (property, modTime, ram_min, ram_amber, cpu_min, cpu_amber, hdd_min, hdd_amber) VALUES ('config_log.json', '" + str(
+                file_mod_time) + "', '" + str(
                 mem_config_level_min) + "', '" + str(mem_config_level_medium) + "', '" + str(
                 cpu_config_level_min) + "','" + str(cpu_config_level_medium) + "', '" + str(
                 hdd_config_level_min) + "', '" + str(hdd_config_level_medium) + "');"
@@ -168,7 +173,9 @@ def check_telnet_status():
     Check Telnet status of the server
     :return: True if port is open and accepting connections | False if otherwise
     """
-    port = int(str(subprocess.Popen("nc -z 127.0.0.1 22; echo $?", stdout=subprocess.PIPE, shell=True).communicate()[0]).split("\\n")[0].split("'")[1])
+    port = int(
+        str(subprocess.Popen("nc -z 127.0.0.1 22; echo $?", stdout=subprocess.PIPE, shell=True).communicate()[0]).split(
+            "\\n")[0].split("'")[1])
     if port == 1:
         # Port is closed
         return RAG.RED
@@ -290,7 +297,8 @@ def format_html_page():
     return html_format_header, html_format_footer
 
 
-def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_opn_tbl_stat, telnet_stat, file_mod_stat):
+def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_opn_tbl_stat, telnet_stat,
+                          file_mod_stat):
     """
     Create HTML Page with the data recived
     :param server_name: Name of the server
@@ -333,7 +341,6 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
     """
 
     if file_mod_stat is not None:
-
         file_mod_table_header = """
         <h3>Configuration parameters changed at the previous moment</h3>\n
         <table id="file_mod" border="1|0" class="table table-striped table-dark">
@@ -380,10 +387,30 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
 
     return html_page
 
-def send_email(html_template):
 
+def send_email(html_template, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_opn_tbl_stat, telnet_stat):
+    """
+    Send an E-mail with the RAG status of every feature
+    :param html_template:
+    :param ram_util:
+    :param cpu_util:
+    :param hdd_util:
+    :param mysql_t_stat:
+    :param mysql_opn_tbl_stat:
+    :param telnet_stat:
+    :return:
+    """
+    subject_line = ""
 
+    data_array = {"ram_utilization": ram_util, "cpu_utilization": cpu_util,
+                  "hdd_utilization": hdd_util, "mysql_threads_connected_status": mysql_t_stat,
+                  "mysql_opn_tbl_status": mysql_opn_tbl_stat, "telnet_status": telnet_stat}
 
+    for (key, value) in data_array:
+        if value is "RED":
+            subject_line += " RED " + str(datetime.now()) + " " + str(key)
+
+    mail_stat = subprocess.Popen("echo " + html_template + " | mail -s " + subject_line + " bestbasuru@live.com", stdout=subprocess.PIPE, shell=True)
 
 
 web_hook = False
@@ -397,13 +424,15 @@ while True:
     telnet_connection = check_telnet_status()
     mysql_open_tables = check_mysql_open_tables_status()
 
-    html_body_data_parser(server_name=server_name,
-                          ram_util=ram_utilization,
-                          cpu_util=cpu_utilization,
-                          hdd_util=hdd_utilization,
-                          mysql_t_stat=mysql_threads_active,
-                          mysql_opn_tbl_stat=mysql_open_tables,
-                          telnet_stat=telnet_connection,
-                          file_mod_stat=check_file_modification_time())
+    template = html_body_data_parser(server_name=server_name,
+                                     ram_util=ram_utilization,
+                                     cpu_util=cpu_utilization,
+                                     hdd_util=hdd_utilization,
+                                     mysql_t_stat=mysql_threads_active,
+                                     mysql_opn_tbl_stat=mysql_open_tables,
+                                     telnet_stat=telnet_connection,
+                                     file_mod_stat=check_file_modification_time())
 
+    send_email(template, ram_utilization, cpu_utilization, hdd_utilization, mysql_threads_active, telnet_connection,
+               mysql_open_tables)
     break
