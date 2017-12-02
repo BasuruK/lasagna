@@ -39,6 +39,9 @@ threads_connected = config_file["threads_connected"]
 # MySQL open tables limit Status
 open_tables = config_file["open_tables"]
 
+# Admin Email
+admin_email = config_file["notification_email"]
+
 
 def check_ram_utilization_level():
     """
@@ -216,7 +219,7 @@ def close_html_file(file):
         pass
 
 
-def truncate_html_file(file):
+def truncate_html_file():
     open("webapp/webapp.html", 'w').close()
 
 
@@ -224,8 +227,7 @@ def format_html_page():
     """
     Format an HTML Page from the input data
     """
-    html_format_header = """
-        <!DOCTYPE html>
+    html_format_header = """<!DOCTYPE html>
     <html lang="en">
     <meta charset="UTF-8">
     <title>Information Monitor</title>
@@ -381,7 +383,7 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
 
     # Save the html page
     page_fp = read_html_file()
-    truncate_html_file(page_fp)
+    truncate_html_file()
     page_fp.write(html_page)
     close_html_file(page_fp)
 
@@ -406,11 +408,11 @@ def send_email(html_template, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_
                   "hdd_utilization": hdd_util, "mysql_threads_connected_status": mysql_t_stat,
                   "mysql_opn_tbl_status": mysql_opn_tbl_stat, "telnet_status": telnet_stat}
 
-    for (key, value) in data_array:
+    for (key, value) in data_array.items():
         if value is "RED":
             subject_line += " RED " + str(datetime.now()) + " " + str(key)
 
-    mail_stat = subprocess.Popen("echo " + html_template + " | mail -s " + subject_line + " bestbasuru@live.com", stdout=subprocess.PIPE, shell=True)
+    mail = subprocess.Popen('mail -s "$(echo "' + subject_line + '\nContent-Type: text/html")" ' + admin_email + ' < ' + os.path.abspath("webapp/webapp.html") + '', stdout=subprocess.PIPE, shell=True)
 
 
 web_hook = False
