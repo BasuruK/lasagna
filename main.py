@@ -1,26 +1,27 @@
 import os
 import subprocess
-from lasagna import RAG
-from lasagna.log_manager import log, ERROR, LOGS
+import RAG
+from log_manager import log, ERROR, LOGS
 import json
-import webbrowser
 import MySQLdb
 from datetime import datetime
+import sys
+import time
 
 # Open Config Files
+config_file = None
 try:
     with open("config_param.json", "r") as f:
         config_file = json.load(f)
-except FileNotFoundError:
-    log("config_param.json file does not exist", ERROR)
 
-# Connect to the Database
-try:
+    # Connect to the Database
     db = MySQLdb.connect(config_file["mysql_hostname"],
                          config_file["mysql_uname"],
                          config_file["mysql_pass"],
                          config_file["mysql_dbname"])
     cursor = db.cursor()
+except FileNotFoundError:
+    log("config_param.json file does not exist", ERROR)
 except MySQLdb.DatabaseError:
     log("Database Not initialized, Please create a Database from the name mentioned in the config_param.json file", ERROR)
     exit(1)
@@ -201,7 +202,10 @@ def get_server_name():
     svr_name = str(subprocess.Popen("hostname", stdout=subprocess.PIPE, shell=True).communicate()[0])
     server_ip = str(subprocess.Popen("hostname -i", stdout=subprocess.PIPE, shell=True).communicate()[0])
 
-    return svr_name.split("'")[1].rsplit("\\n")[0] + " " + server_ip.split("'")[1].rsplit("\\n")[0]
+    try:
+        return svr_name.split("'")[1].rsplit("\\n")[0] + " " + server_ip.split("'")[1].rsplit("\\n")[0]
+    except IndexError:
+        return None
 
 
 def read_html_file():
@@ -428,7 +432,18 @@ def send_email(html_template, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_
         log("Email not sent, HTML file not found", ERROR)
 
 
-web_hook = False
+def weekday_weekend_tracker():
+
+    day = datetime.today().weekday()
+
+    if day <= 5:
+        return int(config_file["weekday_runtime_seconds"])
+    if day > 5:
+        return int(config_file["weekend_runtime_seconds"])
+
+
+sleep_time = weekday_weekend_tracker()
+
 # Main functionality
 while True:
     server_name = get_server_name()
@@ -450,4 +465,17 @@ while True:
 
     send_email(template, ram_utilization, cpu_utilization, hdd_utilization, mysql_threads_active, telnet_connection,
                mysql_open_tables)
-    break
+
+    try:
+        # Check whether sleep command issued
+        if sys.argv[1] == "-s":
+            print("Script Running")
+            time.sleep(10)
+        else:
+            break
+    except TypeError:
+        log("Script runs one time, issue -s command to activate sleep")
+        break
+    except IndexError:
+        log("Script runs one time, issue -s command to activate sleep")
+        break
