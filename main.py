@@ -76,7 +76,7 @@ def check_cpu_utilization_level():
     Based on the utilization configuration level update the RAG status for CPU
     :return: RAG Status
     """
-    cpu_util = subprocess.Popen("mpstat | awk -F ' ' '{print $12}'", stdout=subprocess.PIPE, shell=True)
+    cpu_util = subprocess.Popen("mpstat | awk -F ' ' '{print $13}'", stdout=subprocess.PIPE, shell=True)
     cpu_util = float(str(cpu_util.communicate()[0]).split("\\n")[3])
 
     if cpu_util <= cpu_config_level_min:
@@ -199,11 +199,12 @@ def get_server_name():
     Gets the Hostname and Host IP of the server
     :return: Hostname and Host IP
     """
+    user_name = str(subprocess.Popen("whoami", stdout=subprocess.PIPE, shell=True).communicate()[0])
     svr_name = str(subprocess.Popen("hostname", stdout=subprocess.PIPE, shell=True).communicate()[0])
     server_ip = str(subprocess.Popen("hostname -i", stdout=subprocess.PIPE, shell=True).communicate()[0])
 
     try:
-        return svr_name.split("'")[1].rsplit("\\n")[0] + " " + server_ip.split("'")[1].rsplit("\\n")[0]
+        return user_name.split("'")[1].rsplit("\\n")[0] + "@" + svr_name.split("'")[1].rsplit("\\n")[0] + " " + server_ip.split("'")[1].rsplit("\\n")[0]
     except IndexError:
         return None
 
@@ -338,22 +339,21 @@ def html_body_data_parser(server_name, ram_util, cpu_util, hdd_util, mysql_t_sta
             <th scope="col" colspan=2">MYSQL Open Table Status</th>
             <th scope="col" colspan="2">Telnet Connection Status</th>
         </tr>
-        <tr>\n
     """
 
-    html_body += "<td colspan='3' id='server_name'>" + server_name + "</td>\n"
+    html_body += "<tr>\n <td colspan='3' id='server_name'>" + server_name + "</td>\n"
     html_body += "<td colspan='2' id='ram_util'>" + str(ram_util) + "</td>\n"
     html_body += "<td colspan='2' id='cpu_util'>" + str(cpu_util) + "</td>\n"
     html_body += "<td colspan='2' id='hdd_util'>" + str(hdd_util) + "</td>\n"
     html_body += "<td colspan='2' id='mysql_util'>" + str(mysql_t_stat) + "</td>\n"
     html_body += "<td colspan='2' id='open_table'>" + str(mysql_opn_tbl_stat) + "</td>\n"
-    html_body += "<td colspan='2' id='tel_net'>" + str(telnet_stat) + "</td>\n"
+    html_body += "<td colspan='2' id='tel_net'>" + str(telnet_stat) + "</td>\n</tr>\n"
 
-    html_body += """</tr>\n
-    </table>\n
+    html_body += """</table>\n
     """
 
     if file_mod_stat is not None:
+        RAG.FILE_MODIFY_STATUS = True
         file_mod_table_header = """
         <h3>Configuration parameters changed at the previous moment</h3>\n
         <table id="file_mod" border="1|0" class="table table-striped table-dark">
@@ -417,6 +417,10 @@ def send_email(html_template, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_
     """
     subject_line = ""
 
+    if RAG.FILE_MODIFY_STATUS is True:
+        # Change subject if file modification is detected
+        subject_line += " Configuration Parameters Modified " + str(datetime.now()) + " "
+
     data_array = {"ram_utilization": ram_util, "cpu_utilization": cpu_util,
                   "hdd_utilization": hdd_util, "mysql_threads_connected_status": mysql_t_stat,
                   "mysql_opn_tbl_status": mysql_opn_tbl_stat, "telnet_status": telnet_stat}
@@ -424,12 +428,19 @@ def send_email(html_template, ram_util, cpu_util, hdd_util, mysql_t_stat, mysql_
     for (key, value) in data_array.items():
         if value is "RED":
             subject_line += " RED " + str(datetime.now()) + " " + str(key)
+            RAG.THRESHOLD_BREACH = True
 
-    try:
-        mail = subprocess.Popen('mail -s "$(echo "' + subject_line + '\nContent-Type: text/html")" ' + admin_email + ' < ' + os.path.abspath("webapp/webapp.html") + '', stdout=subprocess.PIPE, shell=True)
-        log("Email Sent to address " + admin_email, LOGS)
-    except FileNotFoundError:
-        log("Email not sent, HTML file not found", ERROR)
+    if RAG.THRESHOLD_BREACH is True or RAG.FILE_MODIFY_STATUS is True:
+        try:
+            mail = subprocess.Popen('mail -s "$(echo "' + subject_line + '\nContent-Type: text/html")" ' + admin_email + ' < ' + os.path.abspath("webapp/webapp.html") + '', stdout=subprocess.PIPE, shell=True)
+            log("Email Sent to address " + admin_email, LOGS)
+        except FileNotFoundError:
+            log("Email not sent, HTML file not found", ERROR)
+    else:
+        log("No Threshold Breach Detected", LOGS)
+
+    RAG.THRESHOLD_BREACH = False
+    RAG.FILE_MODIFY_STATUS = False
 
 
 def weekday_weekend_tracker():
